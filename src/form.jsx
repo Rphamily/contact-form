@@ -10,40 +10,36 @@ export function SubscriberForm() {
     message: ''
   });
 
-  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({
+    username: false,
+    email: false
+  });
+
   const [submitted, setSubmitted] = useState(false);
+
+  const isValidUsername = (username) => /^[a-zA-Z0-9]+$/.test(username);
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const validate = () => {
-    const newErrors = {};
-
-    if (!/^[a-zA-Z0-9]+$/.test(formData.username)) {
-      newErrors.username = 'Username must be alphanumeric with no symbols.';
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email.';
-    }
-
-    return newErrors;
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+
+    // Final validation check
+    if (!isValidUsername(formData.username) || !isValidEmail(formData.email)) {
+      setTouched({ username: true, email: true }); // show messages if skipped
       return;
     }
 
-    setErrors({});
     console.log(formData);
-
-    // Simulate sending form
     setSubmitted(true);
   };
 
@@ -62,20 +58,35 @@ export function SubscriberForm() {
         <Form.Control>
           <Form.Input
             name="username"
-            color={errors.username ? 'danger' : formData.username ? 'success' : undefined}
             value={formData.username}
             onChange={handleChange}
+            onBlur={handleBlur}
+            color={
+              touched.username
+                ? isValidUsername(formData.username) ? 'success' : 'danger'
+                : undefined
+            }
           />
           <Icon align="left" size="small">
             <i className="fas fa-user" />
           </Icon>
           <Icon align="right" size="small">
-            <i className={`fas ${errors.username ? 'fa-exclamation-triangle' : 'fa-check'}`} />
+            <i className={`fas ${
+              touched.username
+                ? isValidUsername(formData.username)
+                  ? 'fa-check'
+                  : 'fa-exclamation-triangle'
+                : ''
+            }`} />
           </Icon>
         </Form.Control>
-        <Form.Help color={errors.username ? 'danger' : 'success'}>
-          {errors.username || 'Username looks good!'}
-        </Form.Help>
+        {touched.username && formData.username && (
+          <Form.Help color={isValidUsername(formData.username) ? 'success' : 'danger'}>
+            {isValidUsername(formData.username)
+              ? 'Username looks good!'
+              : 'Username must be alphanumeric with no symbols.'}
+          </Form.Help>
+        )}
       </Form.Field>
 
       <Form.Field>
@@ -84,20 +95,35 @@ export function SubscriberForm() {
           <Form.Input
             name="email"
             type="email"
-            color={errors.email ? 'danger' : formData.email ? 'success' : undefined}
             value={formData.email}
             onChange={handleChange}
+            onBlur={handleBlur}
+            color={
+              touched.email
+                ? isValidEmail(formData.email) ? 'success' : 'danger'
+                : undefined
+            }
           />
           <Icon align="left" size="small">
             <i className="fas fa-envelope" />
           </Icon>
           <Icon align="right" size="small">
-            <i className={`fas ${errors.email ? 'fa-exclamation-triangle' : 'fa-check'}`} />
+            <i className={`fas ${
+              touched.email
+                ? isValidEmail(formData.email)
+                  ? 'fa-check'
+                  : 'fa-exclamation-triangle'
+                : ''
+            }`} />
           </Icon>
         </Form.Control>
-        <Form.Help color={errors.email ? 'danger' : 'success'}>
-          {errors.email || 'Email looks good!'}
-        </Form.Help>
+        {touched.email && formData.email && (
+          <Form.Help color={isValidEmail(formData.email) ? 'success' : 'danger'}>
+            {isValidEmail(formData.email)
+              ? 'Email looks good!'
+              : 'Please enter a valid email address.'}
+          </Form.Help>
+        )}
       </Form.Field>
 
       <Form.Field>
@@ -129,12 +155,10 @@ export function SubscriberForm() {
           <Button color="link" type="submit">Submit</Button>
         </Form.Control>
         <Form.Control>
-          <Button color="link" colorVariant="light" type="reset" onClick={() => setFormData({
-            username: '',
-            email: '',
-            subject: '',
-            message: ''
-          })}>
+          <Button color="link" colorVariant="light" type="reset" onClick={() => {
+            setFormData({ username: '', email: '', subject: '', message: '' });
+            setTouched({ username: false, email: false });
+          }}>
             Cancel
           </Button>
         </Form.Control>
